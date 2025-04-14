@@ -16,5 +16,13 @@ func main() {
 		}
 	})
 
+	http.HandleFunc("/tasks/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodDelete {
+			tasks.DeleteTask(w, r)
+		} else {
+			http.NotFound(w, r)
+		}
+	})
+
 	http.ListenAndServe(":8080", nil)
 }

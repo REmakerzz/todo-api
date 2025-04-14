@@ -3,6 +3,8 @@ package tasks
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 var lastID int
@@ -34,4 +36,23 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(t)
+}
+
+func DeleteTask(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	idStr := strings.TrimPrefix(path, "/tasks/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Неверный формат id", http.StatusBadRequest)
+		return
+	}
+
+	for i, t := range TaskList {
+		if t.ID == id {
+			TaskList = append(TaskList[:i], TaskList[i+1:]...)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	}
+	http.Error(w, "Задача не найдена", http.StatusNotFound)
 }
