@@ -29,6 +29,7 @@ cd todo-api
 
 # Запускаем сервер
 go run main.go
+```bash
 
 Сервер будет доступен по адресу:
 http://localhost:8080
