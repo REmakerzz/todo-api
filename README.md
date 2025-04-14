@@ -24,7 +24,7 @@
 
 ```bash
 # Клонируем репозиторий
-git clone https://github.com/ТВОЙ_НИК/todo-api.git
+git clone https://github.com/REmakerzz/todo-api.git
 cd todo-api
 
 # Запускаем сервер
