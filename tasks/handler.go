@@ -6,17 +6,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"todo-api/db"
 )
 
-var lastID int
-
-func getNextID() int {
-	lastID++
-	return lastID
-}
-
-func GetTasks(w http.ResponseWriter, r *http.Request) {
+func GetTasks(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	query := r.URL.Query()
 	doneFilter := query.Get("done")
@@ -25,7 +17,7 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if doneFilter == "" {
-		rows, err = db.DB.Query("SELECT id, title, done FROM tasks")
+		rows, err = db.Query("SELECT id, title, done FROM tasks")
 	} else {
 		filterValue, err := strconv.ParseBool(doneFilter)
 		if err != nil {
@@ -33,7 +25,7 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		rows, err = db.DB.Query("SELECT id, title, done FROM tasks WHERE done = ?", filterValue)
+		rows, err = db.Query("SELECT id, title, done FROM tasks WHERE done = ?", filterValue)
 	}
 
 	if err != nil {
@@ -56,7 +48,7 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tasks)
 }
 
-func AddTask(w http.ResponseWriter, r *http.Request) {
+func AddTask(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	var t Task
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 		http.Error(w, "Неверный формат", http.StatusBadRequest)
@@ -67,7 +59,7 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := db.DB.Exec("INSERT INTO tasks (title, done) VALUES (?, ?)", t.Title, false)
+	res, err := db.Exec("INSERT INTO tasks (title, done) VALUES (?, ?)", t.Title, false)
 	if err != nil {
 		http.Error(w, "Ошибка при добавлении в БД", http.StatusInternalServerError)
 		return
@@ -81,7 +73,7 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(t)
 }
 
-func DeleteTask(w http.ResponseWriter, r *http.Request) {
+func DeleteTask(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	path := r.URL.Path
 	idStr := strings.TrimPrefix(path, "/tasks/")
 	id, err := strconv.Atoi(idStr)
@@ -90,7 +82,7 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.DB.Exec("DELETE FROM tasks WHERE id = ?", id)
+	_, err = db.Exec("DELETE FROM tasks WHERE id = ?", id)
 	if err != nil {
 		http.Error(w, "Ошибка при удалении задачи", http.StatusInternalServerError)
 		return
@@ -99,7 +91,7 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func UpdateTask(w http.ResponseWriter, r *http.Request) {
+func UpdateTask(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	path := r.URL.Path
 	idStr := strings.TrimPrefix(path, "/tasks/")
 	id, err := strconv.Atoi(idStr)
@@ -114,7 +106,7 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.DB.Exec("UPDATE tasks SET title = ?, done = ? WHERE id = ?", updated.Title, updated.Done, id)
+	_, err = db.Exec("UPDATE tasks SET title = ?, done = ? WHERE id = ?", updated.Title, updated.Done, id)
 	if err != nil {
 		http.Error(w, "Ошибка при обновлении задачи", http.StatusInternalServerError)
 		return

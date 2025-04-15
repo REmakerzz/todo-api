@@ -2,19 +2,20 @@ package main
 
 import (
 	"net/http"
-	"todo-api/db"
+	"todo-api/storage"
 	"todo-api/tasks"
 )
 
 func main() {
-	db.Init()
 
+	db := storage.NewStorage()
+	defer db.DB.Close()
 	http.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			tasks.GetTasks(w, r)
+			tasks.GetTasks(w, r, db.DB)
 		case http.MethodPost:
-			tasks.AddTask(w, r)
+			tasks.AddTask(w, r, db.DB)
 		default:
 			http.NotFound(w, r)
 		}
@@ -23,9 +24,9 @@ func main() {
 	http.HandleFunc("/tasks/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodDelete:
-			tasks.DeleteTask(w, r)
+			tasks.DeleteTask(w, r, db.DB)
 		case http.MethodPut:
-			tasks.UpdateTask(w, r)
+			tasks.UpdateTask(w, r, db.DB)
 		default:
 			http.NotFound(w, r)
 		}
