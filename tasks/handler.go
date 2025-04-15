@@ -90,14 +90,13 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for i, t := range TaskList {
-		if t.ID == id {
-			TaskList = append(TaskList[:i], TaskList[i+1:]...)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	_, err = db.DB.Exec("DELETE FROM tasks WHERE id = ?", id)
+	if err != nil {
+		http.Error(w, "Ошибка при удалении задачи", http.StatusInternalServerError)
+		return
 	}
-	http.Error(w, "Задача не найдена", http.StatusNotFound)
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
@@ -115,15 +114,15 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for i, t := range TaskList {
-		if t.ID == id {
-			TaskList[i].Title = updated.Title
-			TaskList[i].Done = updated.Done
-
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(TaskList[i])
-			return
-		}
+	_, err = db.DB.Exec("UPDATE tasks SET title = ?, done = ? WHERE id = ?", updated.Title, updated.Done, id)
+	if err != nil {
+		http.Error(w, "Ошибка при обновлении задачи", http.StatusInternalServerError)
+		return
 	}
-	http.Error(w, "Задача не найдена", http.StatusNotFound)
+
+	updated.ID = id
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updated)
+
 }
