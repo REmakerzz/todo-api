@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"todo-api/db"
 )
 
 var lastID int
@@ -43,8 +44,7 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 
 func AddTask(w http.ResponseWriter, r *http.Request) {
 	var t Task
-	err := json.NewDecoder(r.Body).Decode(&t)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 		http.Error(w, "Неверный формат", http.StatusBadRequest)
 		return
 	}
@@ -52,9 +52,16 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Title не может быть пустым", http.StatusBadRequest)
 		return
 	}
+
+	res, err := db.DB.Exec("INSERT INTO tasks (title, done) VALUES (?, ?)", t.Title, false)
+	if err != nil {
+		http.Error(w, "Ошибка при добавлении в БД", http.StatusInternalServerError)
+		return
+	}
+	id, _ := res.LastInsertId()
+	t.ID = int(id)
 	t.Done = false
-	t.ID = getNextID()
-	TaskList = append(TaskList, t)
+
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(t)

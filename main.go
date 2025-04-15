@@ -2,10 +2,13 @@ package main
 
 import (
 	"net/http"
+	"todo-api/db"
 	"todo-api/tasks"
 )
 
 func main() {
+	db.Init()
+
 	http.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
