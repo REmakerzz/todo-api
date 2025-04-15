@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -16,30 +17,43 @@ func getNextID() int {
 }
 
 func GetTasks(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 
 	query := r.URL.Query()
 	doneFilter := query.Get("done")
 
+	var rows *sql.Rows
+	var err error
+
 	if doneFilter == "" {
-		json.NewEncoder(w).Encode(TaskList)
-		return
-	}
-
-	filterValue, err := strconv.ParseBool(doneFilter)
-	if err != nil {
-		http.Error(w, "Неверное значение параметра done. Используйте true или false", http.StatusBadRequest)
-		return
-	}
-
-	var filtered []Task
-	for _, t := range TaskList {
-		if t.Done == filterValue {
-			filtered = append(filtered, t)
+		rows, err = db.DB.Query("SELECT id, title, done FROM tasks")
+	} else {
+		filterValue, err := strconv.ParseBool(doneFilter)
+		if err != nil {
+			http.Error(w, "Неверное значение параметра done. Используйте true или false", http.StatusBadRequest)
+			return
 		}
+
+		rows, err = db.DB.Query("SELECT id, title, done FROM tasks WHERE done = ?", filterValue)
 	}
 
-	json.NewEncoder(w).Encode(filtered)
+	if err != nil {
+		http.Error(w, "Ошибка при чтении из БД", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var tasks []Task
+	for rows.Next() {
+		var t Task
+		if err := rows.Scan(&t.ID, &t.Title, &t.Done); err != nil {
+			http.Error(w, "Ошибка при чтении строки", http.StatusInternalServerError)
+			return
+		}
+		tasks = append(tasks, t)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tasks)
 }
 
 func AddTask(w http.ResponseWriter, r *http.Request) {
