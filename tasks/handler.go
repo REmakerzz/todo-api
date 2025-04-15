@@ -16,7 +16,29 @@ func getNextID() int {
 
 func GetTasks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(TaskList)
+
+	query := r.URL.Query()
+	doneFilter := query.Get("done")
+
+	if doneFilter == "" {
+		json.NewEncoder(w).Encode(TaskList)
+		return
+	}
+
+	filterValue, err := strconv.ParseBool(doneFilter)
+	if err != nil {
+		http.Error(w, "Неверное значение параметра done. Используйте true или false", http.StatusBadRequest)
+		return
+	}
+
+	var filtered []Task
+	for _, t := range TaskList {
+		if t.Done == filterValue {
+			filtered = append(filtered, t)
+		}
+	}
+
+	json.NewEncoder(w).Encode(filtered)
 }
 
 func AddTask(w http.ResponseWriter, r *http.Request) {
