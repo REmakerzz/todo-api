@@ -7,19 +7,23 @@ import (
 
 func main() {
 	http.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
+		switch r.Method {
+		case http.MethodGet:
 			tasks.GetTasks(w, r)
-		} else if r.Method == http.MethodPost {
+		case http.MethodPost:
 			tasks.AddTask(w, r)
-		} else {
+		default:
 			http.NotFound(w, r)
 		}
 	})
 
 	http.HandleFunc("/tasks/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodDelete {
+		switch r.Method {
+		case http.MethodDelete:
 			tasks.DeleteTask(w, r)
-		} else {
+		case http.MethodPut:
+			tasks.UpdateTask(w, r)
+		default:
 			http.NotFound(w, r)
 		}
 	})

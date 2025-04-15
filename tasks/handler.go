@@ -56,3 +56,31 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Error(w, "Задача не найдена", http.StatusNotFound)
 }
+
+func UpdateTask(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	idStr := strings.TrimPrefix(path, "/tasks/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Неверный формат id", http.StatusBadRequest)
+		return
+	}
+
+	var updated Task
+	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
+		http.Error(w, "Неверный JSON", http.StatusBadRequest)
+		return
+	}
+
+	for i, t := range TaskList {
+		if t.ID == id {
+			TaskList[i].Title = updated.Title
+			TaskList[i].Done = updated.Done
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(TaskList[i])
+			return
+		}
+	}
+	http.Error(w, "Задача не найдена", http.StatusNotFound)
+}
