@@ -9,6 +9,7 @@
 - Добавление новой задачи: `POST /tasks`
 - Удаление задачи по ID: `DELETE /tasks/{id}`
 - Обновление задачи по ID: `PUT /tasks/{id}`
+- Фильтрация задач по статусу done в `GET /tasks`
 
 ---
 
@@ -69,6 +70,11 @@ DELETE http://localhost:8080/tasks/{id}
 ### 🔃 Обновить задачу
 
 PUT http://localhost:8080/tasks/{id}
+
+### Фильтрация задач по статусу done
+
+GET http://localhost:8080/tasks?done=true
+GET http://localhost:8080/tasks?done=false
 
 ---
 
